@@ -1,4 +1,4 @@
-package reflectutil
+package goutil
 
 import (
 	"fmt"
