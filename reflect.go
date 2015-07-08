@@ -30,3 +30,9 @@ func Assign(ptr interface{}, val interface{}) error {
 
 	return nil
 }
+
+func TypeEqual(v1, v2 interface{}) bool {
+	t1 := reflect.TypeOf(v1)
+	t2 := reflect.TypeOf(v2)
+	return t1 == t2
+}
