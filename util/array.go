@@ -90,6 +90,15 @@ func Reverse(array interface{}) {
 // Remove all elems equals to Val in Array.
 // Return the number of elems removed.
 func Remove(ptrArray interface{}, val interface{}) int {
+	check := func(e interface{}) bool {
+		return reflect.DeepEqual(e, val)
+	}
+	return RemoveEx(ptrArray, check)
+}
+
+// Remove all elems equals to Val in Array.
+// Return the number of elems removed.
+func RemoveEx(ptrArray interface{}, check func(e interface{}) bool) int {
 	v := reflect.ValueOf(ptrArray)
 	t := reflect.TypeOf(ptrArray)
 	if t.Kind() != reflect.Ptr {
@@ -105,15 +114,10 @@ func Remove(ptrArray interface{}, val interface{}) int {
 		panic("Array can not address")
 	}
 
-	vt := reflect.TypeOf(val)
-	if t.Elem() != vt {
-		panic("Elem and Val type not match")
-	}
-
 	var removed int
 	for i, j := 0, 0; i < v.Len(); i++ {
 		ei := v.Index(i)
-		if reflect.DeepEqual(ei.Interface(), val) {
+		if check(ei.Interface()) {
 			removed += 1
 		} else {
 			v.Index(j).Set(ei)
