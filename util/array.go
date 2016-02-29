@@ -5,29 +5,11 @@ import (
 	"reflect"
 )
 
-// Does array contains a element which equals to val.
-func Contain(array interface{}, val interface{}) bool {
-	i := Find(array, val)
-	if i == -1 {
-		return false
-	}
-	return true
-}
-
 // Find the positon of val in the array. Return -1 if does not found.
 func Find(array interface{}, val interface{}) int {
-	v := reflect.ValueOf(array)
-	t := reflect.TypeOf(array)
-	if t.Kind() == reflect.Ptr {
-		v = v.Elem()
-		t = t.Elem()
-	}
-	if t.Kind() != reflect.Slice {
-		panic("Reverse a non-slice type")
-	}
+	v := valueOfSlice(array)
 
-	vt := reflect.TypeOf(val)
-	if t.Elem() != vt {
+	if v.Type().Elem() != reflect.TypeOf(val) {
 		panic("Elem and Val type not match")
 	}
 
@@ -43,15 +25,8 @@ func Find(array interface{}, val interface{}) int {
 
 // Join all elements of array as a string seperated by sep.
 func Join(array interface{}, sep string) string {
-	v := reflect.ValueOf(array)
-	t := reflect.TypeOf(array)
-	if t.Kind() == reflect.Ptr {
-		v = v.Elem()
-		t = t.Elem()
-	}
-	if t.Kind() != reflect.Slice {
-		panic("Join a non-slice type")
-	}
+	v := valueOfSlice(array)
+
 	s := ""
 	n := v.Len()
 	for i := 0; i < n; i++ {
@@ -66,17 +41,9 @@ func Join(array interface{}, sep string) string {
 
 // Reverse elements of array from beinning to end.
 func Reverse(array interface{}) {
-	v := reflect.ValueOf(array)
-	t := reflect.TypeOf(array)
-	if t.Kind() == reflect.Ptr {
-		v = v.Elem()
-		t = t.Elem()
-	}
-	if t.Kind() != reflect.Slice {
-		panic("Reverse a non-slice type")
-	}
+	v := valueOfSlice(array)
 
-	var tmp reflect.Value = reflect.New(t.Elem()).Elem()
+	var tmp reflect.Value = reflect.New(v.Type().Elem()).Elem()
 
 	for i, j := 0, v.Len()-1; i < j; i, j = i+1, j-1 {
 		ei := v.Index(i)
@@ -87,32 +54,19 @@ func Reverse(array interface{}) {
 	}
 }
 
-// Remove all elems equals to Val in Array.
+// Delete all elems equals to Val in Array.
 // Return the number of elems removed.
-func Remove(ptrArray interface{}, val interface{}) int {
+func Delete(ptrArray interface{}, val interface{}) int {
 	check := func(e interface{}) bool {
 		return reflect.DeepEqual(e, val)
 	}
-	return RemoveEx(ptrArray, check)
+	return DeleteEx(ptrArray, check)
 }
 
-// Remove all elems equals to Val in Array.
+// Delete all elems which check() returns true.
 // Return the number of elems removed.
-func RemoveEx(ptrArray interface{}, check func(e interface{}) bool) int {
-	v := reflect.ValueOf(ptrArray)
-	t := reflect.TypeOf(ptrArray)
-	if t.Kind() != reflect.Ptr {
-		panic("Must be a pointer of slice")
-	}
-	t = t.Elem()
-	v = v.Elem()
-
-	if t.Kind() != reflect.Slice {
-		panic("Remove a non-slice type")
-	}
-	if !v.CanAddr() {
-		panic("Array can not address")
-	}
+func DeleteEx(ptrArray interface{}, check func(e interface{}) bool) int {
+	v := valueOfSlicePtr(ptrArray)
 
 	var removed int
 	for i, j := 0, 0; i < v.Len(); i++ {
@@ -128,4 +82,34 @@ func RemoveEx(ptrArray interface{}, check func(e interface{}) bool) int {
 	v.SetLen(v.Len() - removed)
 
 	return removed
+}
+
+func valueOfSlice(i interface{}) reflect.Value {
+	v := reflect.ValueOf(i)
+	t := reflect.TypeOf(i)
+	if t.Kind() == reflect.Ptr {
+		v = v.Elem()
+		t = t.Elem()
+	}
+	if t.Kind() != reflect.Slice {
+		panic("not slice type")
+	}
+	return v
+}
+
+func valueOfSlicePtr(i interface{}) reflect.Value {
+	pv := reflect.ValueOf(i)
+	pt := reflect.TypeOf(i)
+	if pt.Kind() != reflect.Ptr {
+		panic("not a pointer")
+	}
+	t := pt.Elem()
+	v := pv.Elem()
+	if t.Kind() != reflect.Slice {
+		panic("not slice type")
+	}
+	if !v.CanAddr() {
+		panic("cannot address")
+	}
+	return v
 }
