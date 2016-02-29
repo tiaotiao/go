@@ -54,6 +54,38 @@ func Reverse(array interface{}) {
 	}
 }
 
+// Insert an element into array at the position of index.
+func Insert(ptrArray interface{}, index int, val interface{}) {
+	v := valueOfSlicePtr(ptrArray)
+	if v.Type().Elem() != reflect.TypeOf(val) {
+		panic("type not match")
+	}
+	if index > v.Len() {
+		panic("Insert index out of bounds")
+	}
+
+	a := v.Slice(0, index)
+	b := v.Slice(index, v.Len())
+
+	c := v
+	if v.Len() == v.Cap() {
+		// extend capacity
+		ext := v.Cap() / 2
+		if ext < 8 {
+			ext = 8
+		}
+		c = reflect.MakeSlice(v.Type(), v.Len()+1, v.Cap()+ext)
+	} else {
+		c.SetLen(v.Len() + 1)
+	}
+
+	reflect.Copy(c, a)
+	reflect.Copy(c.Slice(index+1, c.Len()), b)
+
+	c.Index(index).Set(reflect.ValueOf(val))
+	v.Set(c)
+}
+
 // Delete all elems equals to Val in Array.
 // Return the number of elems removed.
 func Delete(ptrArray interface{}, val interface{}) int {
