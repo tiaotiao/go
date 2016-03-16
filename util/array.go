@@ -92,6 +92,19 @@ func Insert(ptrArray interface{}, index int, val interface{}) {
 	v.Set(c)
 }
 
+// Remove an element from the array at the position of index.
+func Remove(ptrArray interface{}, index int) {
+	v := valueOfSlicePtr(ptrArray)
+
+	if index >= v.Len() {
+		panic("index out of bounds")
+	}
+
+	reflect.Copy(v.Slice(index, v.Len()), v.Slice(index+1, v.Len()))
+
+	v.SetLen(v.Len() - 1)
+}
+
 // Delete all elems equals to Val in Array.
 // Return the number of elems removed.
 func Delete(ptrArray interface{}, val interface{}) int {
