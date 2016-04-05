@@ -105,16 +105,32 @@ func Remove(ptrArray interface{}, index int) {
 	v.SetLen(v.Len() - 1)
 }
 
-// Delete all elems equals to Val in Array.
-// Return the number of elems removed.
+// Delete the first elem which equals to val.
+// Return the index of the deleted elem, otherwise return -1.
 func Delete(ptrArray interface{}, val interface{}) int {
-	check := func(e interface{}) bool {
-		return reflect.DeepEqual(e, val)
+	v := valueOfSlicePtr(ptrArray)
+
+	var index int = -1
+	for i, j := 0, 0; i < v.Len(); i++ {
+		ei := v.Index(i)
+		if index == -1 && reflect.DeepEqual(ei.Interface(), val) {
+			index = i
+		} else {
+			if index != -1 {
+				v.Index(j).Set(ei)
+			}
+			j += 1
+		}
 	}
-	return DeleteEx(ptrArray, check)
+
+	if index != -1 {
+		v.SetLen(v.Len() - 1)
+	}
+
+	return index
 }
 
-// Delete all elems which check() returns true.
+// Delete all elems with which check() returns true.
 // Return the number of elems removed.
 func DeleteEx(ptrArray interface{}, check func(e interface{}) bool) int {
 	v := valueOfSlicePtr(ptrArray)
