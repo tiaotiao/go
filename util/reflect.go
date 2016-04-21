@@ -11,19 +11,20 @@ import (
 //   if !ok { panic() }
 //   *ptr = v
 func Assign(ptr interface{}, val interface{}) error {
-	pv := reflect.ValueOf(ptr)
-	if pv.Kind() != reflect.Ptr {
-		panic("ptr must be a pointer")
+	ev, err := ptrElemOf(ptr)
+	if err != nil {
+		return err
 	}
-	ev := pv.Elem()
-	if !ev.CanSet() {
-		panic("elem of ptr can not be set")
+
+	if val == nil {
+		ev.Set(reflect.Zero(ev.Type()))
+		return nil
 	}
 
 	vv := reflect.ValueOf(val)
 
-	if vv.Type() != ev.Type() {
-		return fmt.Errorf("type not match (%v, %v)", vv.Type().String(), ev.Type().String())
+	if !vv.Type().ConvertibleTo(ev.Type()) {
+		return fmt.Errorf("type not match (%v, %v) (%v, %v)", ptr, ev.Type().String(), val, vv.Type().String())
 	}
 
 	ev.Set(vv)
@@ -35,4 +36,23 @@ func TypeEqual(v1, v2 interface{}) bool {
 	t1 := reflect.TypeOf(v1)
 	t2 := reflect.TypeOf(v2)
 	return t1 == t2
+}
+
+func MustPointer(v interface{}) {
+	_, err := ptrElemOf(v)
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
+func ptrElemOf(v interface{}) (reflect.Value, error) {
+	pv := reflect.ValueOf(v)
+	if pv.Kind() != reflect.Ptr {
+		return pv, fmt.Errorf("'%v(%v)' not a pointer", pv, pv.Kind())
+	}
+	ev := pv.Elem()
+	if !ev.CanSet() {
+		return pv, fmt.Errorf("'%v(%v)' can not set", pv, pv.Kind())
+	}
+	return ev, nil
 }
